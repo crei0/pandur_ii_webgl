@@ -1,0 +1,335 @@
+
+<!--
+	Name: 		PandurII em WebGL
+	Author:		André Guedes
+	Website:	http://andreguedes.pt/
+	Date:		24-08-2011
+	Updated:	23-08-2014
+-->
+<html>
+<head> 
+	<title>PandurII em WebGL</title> 
+	<meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+	<style type="text/css"> 
+		body {
+			margin: 20px;
+			overflow: hidden;
+			font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+			text-shadow: #ccc 0px 1px 1px;
+			background: #fff;
+		}
+		a {
+			text-decoration: none;
+			color: #000;
+		}
+			a:hover, a:active {
+				text-decoration: underline;
+				background: #eee;
+			}
+		
+		#sobreposicao {
+			position: absolute !important;
+			color: #000000;
+			z-index: 102;
+			height: 20px;
+		}
+		
+		#setas {
+			position: absolute;
+			width: 100%;
+			height: 100%;
+			z-index: 101;
+		}
+			#seta_esquerda, #seta_direita {
+				float: left;
+				width: 50%;
+				height: 100%;
+			}
+				#seta_esquerda:hover div, #seta_esquerda:active div, #seta_direita:hover div, #seta_direita:active div {
+					opacity: 1;
+					-webkit-transition: opacity 0.5s linear;
+				}
+				
+				#seta_esquerda div, #seta_direita div {
+					background: url(setas.png) no-repeat;
+					position: absolute;
+					height: 36px;
+					width: 31px;
+					top: 36%;
+					left: 9%;
+					opacity: 1;
+				}
+					#seta_direita div {
+						background-position: -31px 0;
+						left: auto;
+						right: 9%;
+					}
+			
+		#modos {
+			display: block;
+			height: 48px;
+			padding: 0 8px 0 64px;
+			line-height: 46px;
+			background: url(modo_wireframe.png) no-repeat;
+			text-decoration: none;
+			color: #000;
+			
+		}
+			#modos:hover {
+				background-color: #fafafa;
+				text-decoration: underline; }
+		
+		#informacoes {
+			position: absolute;
+			float: left;
+			z-index: 103;
+			bottom: 20px;
+			width: 100%;
+			font-size: smaller;
+		}
+			#informacoes em {
+				color: #333;
+			}
+			.coluna {
+				float: left;
+				width: 32%;
+				margin-right: 40px;
+			}
+			.coluna_dir {
+				float: right;
+				width: 40%;
+				letter-spacing: 0px;
+				font-size: larger;
+				padding-top: 16px;
+				text-align: right;
+			}
+				
+			#logo {
+				float: right;
+				margin: 0 40px 0 10px;
+			}
+	</style>
+ 
+<script type="text/javascript" src="js/Three.js"></script> 
+<script type="text/javascript" src="js/RequestAnimationFrame.js"></script>
+<script type="text/javascript" src="js/Stats.js"></script>
+
+<script type="text/javascript">
+	var camera, scene, renderer, info, sun, loader, stats, container;
+	var mouse = { x: 0, y: 0 }						// rato
+	var camaraRotacao = 0;							// rotacao da camara
+	var camdist = 400; 								// distancia da camara ao objecto
+	
+	var ratoEmClique = false;						// o rato esta a ser clicado?
+	var deslocamento = 0.0;							// incremento do deslocamento da camara
+	
+	var modoWireframeLigado 			= false;	// o modo wireframe esta ligado?
+	var modoWireframeEmTransicao 		= false;	// em transicao entre o modo wireframe e o normal?
+	var modoWireframeDireccaoTransicao 	= true;		// true = em transicao normal > wireframe | false = em transicao wireframe > normal
+	
+	var mesh;										// o modelo 3d
+	var textura, texturaSombra;						// texturas
+	
+	var ambientLight;
+
+function init() {
+	container = document.getElementById('contentor');
+	
+	info = document.getElementById("info");
+	
+	camera = new THREE.Camera( 40, window.innerWidth / window.innerHeight, 1, 10000 );
+	camera.position.z = camdist;
+	
+	loader = new THREE.JSONLoader(  );
+	scene = new THREE.Scene();
+
+	renderer = new THREE.WebGLRenderer( {antialias: true} );
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	container.appendChild( renderer.domElement );
+	
+	ambientLight = new THREE.AmbientLight( 0x555555 );
+	scene.addLight( ambientLight );
+
+	sun = new THREE.DirectionalLight( 0xffffff );
+	sun.position = camera.position.clone();
+	sun.castShadow = true;
+	scene.addLight( sun );
+	
+	textura = THREE.ImageUtils.loadTexture("pandurII.jpg");
+	texturaSombra = THREE.ImageUtils.loadTexture("sombra.jpg");
+	
+	camaraRotacao = -2.355;
+	
+	loadCube();
+
+	stats = new Stats();
+	stats.domElement.style.position = 'absolute';
+	stats.domElement.style.top = '20px';
+	stats.domElement.style.right = '20px';
+	container.appendChild( stats.domElement );
+	
+	setas = document.getElementById('setas');
+	
+	document.onmousemove = function (event) {
+		event.preventDefault();
+		mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+		//mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+	};
+	setas.onmousedown = function (event) {
+		event.preventDefault();
+		ratoEmClique = true;
+	};
+	setas.onmouseup = function (event) {
+		ratoEmClique = false;
+	};
+	
+	animate();
+}
+
+function loadCube(p) {
+	var onGeometry = function( geometry ) {		
+		adicionarPandur( new THREE.Vector3(0,	0,	0), geometry);
+	};
+	var onGeometrySombra = function( geometrySombra ) {		
+		adicionarSombra( new THREE.Vector3(0,	0,	0), geometrySombra);
+	};
+	
+	loader.load( { model: "pandurII.js", callback: onGeometry } );
+	loader.load( { model: "sombra.js", callback: onGeometrySombra } );
+}
+
+function adicionarSombra(p, g) {
+	var sombra = new THREE.Mesh(g, 
+		new THREE.MeshBasicMaterial({
+			map: texturaSombra, 
+			opacity: 0.5
+		})
+	);
+	sombra.position = p;
+	scene.addObject( sombra );
+};
+
+function adicionarPandur(p, g) {
+	// Pandur
+	mesh = new THREE.Mesh(g, 
+		[
+			new THREE.MeshPhongMaterial({
+				map: textura, 
+				specular: 0x111111, 
+				shininess: 1
+			}), 
+			new THREE.MeshBasicMaterial({
+				color: 0xffffff, 
+				opacity: 0, 
+				wireframe: true, 
+				transparent: true
+			})
+		]
+	);
+	
+	mesh.position = p;
+	
+	scene.addObject( mesh );
+};
+
+function animate() {
+	requestAnimationFrame( animate );
+	
+	camera.position.y = 250;
+	camera.position.x = camdist * Math.cos( camaraRotacao );
+	camera.position.z = camdist * Math.sin( camaraRotacao );
+	////camera.position.y = camdist/2 * Math.sin( camaraRotacao * 2) ;
+
+	sun.position.copy( camera.position );
+	sun.position.normalize();	
+	
+	if (ratoEmClique) { 		// acelerar a velocidade de rotacao da camara
+		if ((mouse.x < 0) && (deslocamento > -0.025)) {
+			deslocamento -= 0.001;
+		}
+		if ((mouse.x > 0) && (deslocamento < 0.025)) {
+			deslocamento += 0.001;
+		}
+	} else { 					// travar a rotacao da camara
+		if (deslocamento < -0.0001) {
+			deslocamento += 0.0005;
+		}
+		if (deslocamento > 0.0001) {
+			deslocamento -= 0.0005;
+		}
+		if ((deslocamento > -0.001) && (deslocamento < 0.001)){
+			deslocamento = 0
+		}
+	}
+	
+	camaraRotacao += deslocamento;
+	
+	if (modoWireframeEmTransicao == true) {
+		if((mesh.materials[1].opacity <= 1) && (mesh.materials[1].opacity >= 0)) {
+			if(modoWireframeTransicaoDireccao == true) {
+				mesh.materials[1].opacity += 0.02;
+			} else {
+				mesh.materials[1].opacity -= 0.02;
+			}
+		} else {
+			if (mesh.materials[1].opacity > 1) {
+				mesh.materials[1].opacity = 1;
+			} else {
+				mesh.materials[1].opacity = 0;
+			}
+			modoWireframeEmTransicao = false;
+		}
+	}
+
+	renderer.render( scene, camera );
+	
+	stats.update();
+};
+
+function modoWireframe(){
+	if (modoWireframeLigado == true) {
+		modoWireframeEmTransicao = true;
+		modoWireframeTransicaoDireccao = false;
+		modoWireframeLigado = false;
+		document.getElementById('modos').style.backgroundPosition = '0px 0px';
+		document.getElementById('modos').innerHTML = "Ligar modo <em>Wireframe</em>";
+	} else {
+		modoWireframeEmTransicao = true;
+		modoWireframeTransicaoDireccao = true;
+		modoWireframeLigado = true;
+		document.getElementById('modos').style.backgroundPosition = '0px -75px';
+		document.getElementById('modos').innerHTML = "Desligar modo <em>Wireframe</em>";
+	}
+}
+
+</script>
+</head> 
+
+<body onload="init();">
+	<div id="sobreposicao">
+		<a href="javascript:modoWireframe();" id="modos">Ligar modo <em>Wireframe</em></a>
+	</div>
+	<div id="informacoes">
+		<div class="coluna">
+			<em><strong>Pandur II em WebGL</strong></em><br />
+			<em>Modelo 3D com 8957 Faces</em><br />
+			<em>Modelo originalmente criado por André Guedes e Nuno Guedes</em><br />
+			<em>Versão WebGL usa o motor 3D de Javascript <a href="https://github.com/mrdoob/three.js/"><strong>Three.JS</strong></a></em><br />
+			<em>Necessita de <a href="http://www.google.com/chrome?hl=pt-PT"><strong>Google Chrome</strong></a> 13 ou <a href="http://www.mozilla.org/pt-PT/firefox/"><strong>Mozilla Firefox</strong></a> 5 ou superior</em>
+		</div>
+		
+		<div class="coluna_dir">
+		<a href="http://andreguedes.pt/" id="logo"><img src="andre_guedes_pt.png" /></a>
+			<strong>Versão WebGL criada por André Guedes</strong><br />
+			<a href="http://andreguedes.pt/">http://andreguedes.pt</a>
+			
+		</div>
+		
+	</div>
+	<div id="setas">
+		<div id="seta_esquerda"><div>&nbsp;</div></div>
+		<div id="seta_direita"><div>&nbsp;</div></div>
+	</div>
+	<div id="contentor">&nbsp;</div>
+</body>
+</html>

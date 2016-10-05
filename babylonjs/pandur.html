@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+		<title>PandurII em Babylon.js</title>
+		<!-- Babylon.js -->
+		<script src="http://www.babylonjs.com/hand.minified-1.2.js"></script>
+		<script src="http://www.babylonjs.com/cannon.js"></script>
+		<script src="http://www.babylonjs.com/oimo.js"></script>
+		<script src="http://www.babylonjs.com/babylon.js"></script>
+		<style>
+			html, body {
+				overflow: hidden;
+				width: 100%;
+				height: 100%;
+				margin: 0;
+				padding: 0;
+				font-family: "Trebuchet MS", sans-serif;
+				margin: 20px;
+			}
+			a {
+				text-decoration: none;
+				color: #000;
+			}
+				a:hover, a:active {
+					text-decoration: underline;
+					background: #eee;
+				}
+
+			#renderCanvas {
+				width: 100%;
+				height: 100%;
+				touch-action: none;
+				background: #fff;
+			}
+
+			#contadorFPS {
+				position: absolute;
+				top: 10px;
+				right: 10px;	
+				background: #eee;
+				opacity: 0.5;
+				border-radius: 5px;
+				padding: 4px 8px 4px 8px;
+			}
+
+			#sobreposicao {
+			position: absolute !important;
+			color: #000000;
+			z-index: 102;
+			height: 20px;
+		}
+		
+		
+		#modos {
+			display: block;
+			height: 48px;
+			padding: 0 8px 0 64px;
+			line-height: 46px;
+			background: url(../modo_wireframe.png) no-repeat;
+			text-decoration: none;
+			color: #000;
+			
+		}
+			#modos:hover {
+				background-color: #fafafa;
+				text-decoration: underline; }
+		
+		#informacoes {
+			position: absolute;
+			float: left;
+			z-index: 103;
+			bottom: 20px;
+			width: 100%;
+			font-size: smaller;
+		}
+			#informacoes em {
+				color: #333;
+			}
+			.coluna {
+				float: left;
+				width: 32%;
+				margin-right: 40px;
+			}
+			.coluna_dir {
+				float: right;
+				width: 40%;
+				letter-spacing: 0px;
+				font-size: larger;
+				padding-top: 16px;
+				text-align: right;
+			}
+				
+			#logo {
+				float: right;
+				margin: 0 40px 0 10px;
+			}
+		</style>
+	</head>
+<body>
+	<div id="sobreposicao">
+		<a href="javascript:modoWireframe();" id="modos">Ligar modo <em>Wireframe</em></a>
+	</div>
+	<div id="informacoes">
+		<div class="coluna">
+			<em><strong>Pandur II em WebGL</strong></em><br />
+			<em>Modelo 3D com 8957 Faces</em><br />
+			<em>Modelo originalmente criado por André Guedes e Nuno Guedes</em><br />
+			<em>Versão WebGL usa <a href="http://www.babylonjs.com/"><strong>Babylon.js</strong></a></em>
+		</div>
+		
+		<div class="coluna_dir">
+		<a href="http://andreguedes.pt/" id="logo"><img src="../andre_guedes_pt.png" title="André Guedes" /></a>
+			<strong>Versão WebGL criada por André Guedes</strong><br />
+			<a href="http://andreguedes.pt/">http://andreguedes.pt</a>
+			
+		</div>
+		
+	</div>
+
+	<canvas id="renderCanvas"></canvas>
+	<div id="contadorFPS"></div>
+	<script>
+		var canvas = document.getElementById("renderCanvas");
+		var engine = new BABYLON.Engine(canvas, true);
+
+		
+
+
+		var createScene = function () {
+			var contadorFPS = document.getElementById("contadorFPS");
+
+			var pandur;
+
+			
+			var scene = new BABYLON.Scene(engine);
+			scene.clearColor = new BABYLON.Color3(1, 1, 1);
+
+			var esfera =  new BABYLON.Mesh.CreateSphere("sphere", 16, 0.1, scene);
+			var esferaMaterial = new BABYLON.StandardMaterial("vermelho", scene);
+			esferaMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0);
+			esferaMaterial.emissiveColor = new BABYLON.Color3(0, 1, 0)
+			esfera.material = esferaMaterial;
+		
+			//Adding a light
+			//var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(20, 20, 100), scene);
+			var light = new BABYLON.DirectionalLight("light", new BABYLON.Vector3(0, -2, 0), scene);
+			light.intensity = 1.0;
+			light.setDirectionToTarget(new BABYLON.Vector3.Zero());
+		
+			//Adding an Arc Rotate Camera
+			var camera = new BABYLON.ArcRotateCamera("Camera", 0, 0.8, 5, new BABYLON.Vector3.Zero(), scene);
+			camera.lowerBetaLimit = 0.1;
+			camera.upperBetaLimit = (Math.PI / 2) * 0.9;
+			camera.lowerRadiusLimit = 2;
+			camera.upperRadiusLimit = 15;
+			camera.attachControl(canvas, false);
+		
+			console.log("1 | pandur: " + pandur);
+			// The first parameter can be used to specify which mesh to import. Here we import all meshes
+			BABYLON.SceneLoader.ImportMesh("", "scenes/", "pandur.babylon", scene, function (newMeshes) {
+				// Set the target of the camera to the first imported mesh
+				pandur = newMeshes[0];
+				console.log("2 | pandur: " + pandur);
+				
+				shadowGenerator.getShadowMap().renderList.push(pandur);
+
+				camera.target = newMeshes[0];
+			});
+			console.log("3 | pandur: " + pandur);
+
+			//var ground = BABYLON.Mesh.CreateGround("ground", 10.0, 10.0, 1.0, scene, false);
+			var ground = BABYLON.Mesh.CreateGround("ground", 6, 6, 2, scene);
+			ground.receiveShadows = true;
+
+			var shadowGenerator = new BABYLON.ShadowGenerator(512, light);
+			//shadowGenerator.getShadowMap().renderList.push(pandur);
+			shadowGenerator.usePoissonSampling = true;
+
+		
+			// Move the light with the camera
+			var alpha = 0;
+			scene.registerBeforeRender(function () {
+				//
+
+				//light.position = camera.position;
+				var posicaoTemporaria = new BABYLON.Vector3(Math.cos(alpha) * 2, 4, Math.sin(alpha) * 2);
+				esfera.position = posicaoTemporaria;
+				light.position = posicaoTemporaria;
+
+				alpha += 0.01;
+			});
+		
+			return scene;
+		}
+		
+		var scene = createScene();
+
+		engine.runRenderLoop(function () {
+			scene.render();
+			contadorFPS.innerHTML = BABYLON.Tools.GetFps().toFixed() + " fps";
+		});
+
+		// Resize
+		window.addEventListener("resize", function () {
+			engine.resize();
+		});
+	</script>
+</body>
+</html>
