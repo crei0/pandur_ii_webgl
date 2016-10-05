@@ -1,14 +1,14 @@
 
 <!--
-	Name: 		PandurII em WebGL
+	Name: 		PandurII in WebGL
 	Author:		André Guedes
 	Website:	http://andreguedes.pt/
 	Date:		24-08-2011
-	Updated:	23-08-2014
+	Updated:	05-10-2016
 -->
 <html>
 <head> 
-	<title>PandurII em WebGL</title> 
+	<title>PandurII in WebGL</title> 
 	<meta http-equiv="content-type" content="text/html; charset=utf-8"> 
 	<style type="text/css"> 
 		body {
@@ -24,7 +24,6 @@
 		}
 			a:hover, a:active {
 				text-decoration: underline;
-				background: #eee;
 			}
 		
 		#sobreposicao {
@@ -76,8 +75,8 @@
 			
 		}
 			#modos:hover {
-				background-color: #fafafa;
-				text-decoration: underline; }
+				text-decoration: underline;
+			}
 		
 		#informacoes {
 			position: absolute;
@@ -140,7 +139,7 @@ function init() {
 	camera = new THREE.Camera( 40, window.innerWidth / window.innerHeight, 1, 10000 );
 	camera.position.z = camdist;
 	
-	loader = new THREE.JSONLoader(  );
+	loader = new THREE.JSONLoader();
 	scene = new THREE.Scene();
 
 	renderer = new THREE.WebGLRenderer( {antialias: true} );
@@ -292,13 +291,13 @@ function modoWireframe(){
 		modoWireframeTransicaoDireccao = false;
 		modoWireframeLigado = false;
 		document.getElementById('modos').style.backgroundPosition = '0px 0px';
-		document.getElementById('modos').innerHTML = "Ligar modo <em>Wireframe</em>";
+		document.getElementById('modos').innerHTML = "<em>Wireframe</em> mode ON";
 	} else {
 		modoWireframeEmTransicao = true;
 		modoWireframeTransicaoDireccao = true;
 		modoWireframeLigado = true;
 		document.getElementById('modos').style.backgroundPosition = '0px -75px';
-		document.getElementById('modos').innerHTML = "Desligar modo <em>Wireframe</em>";
+		document.getElementById('modos').innerHTML = "<em>Wireframe</em> mode OFF";
 	}
 }
 
@@ -307,20 +306,19 @@ function modoWireframe(){
 
 <body onload="init();">
 	<div id="sobreposicao">
-		<a href="javascript:modoWireframe();" id="modos">Ligar modo <em>Wireframe</em></a>
+		<a href="javascript:modoWireframe();" id="modos"><em>Wireframe</em> mode ON</a>
 	</div>
 	<div id="informacoes">
 		<div class="coluna">
-			<em><strong>Pandur II em WebGL</strong></em><br />
-			<em>Modelo 3D com 8957 Faces</em><br />
-			<em>Modelo originalmente criado por André Guedes e Nuno Guedes</em><br />
-			<em>Versão WebGL usa o motor 3D de Javascript <a href="https://github.com/mrdoob/three.js/"><strong>Three.JS</strong></a></em><br />
-			<em>Necessita de <a href="http://www.google.com/chrome?hl=pt-PT"><strong>Google Chrome</strong></a> 13 ou <a href="http://www.mozilla.org/pt-PT/firefox/"><strong>Mozilla Firefox</strong></a> 5 ou superior</em>
+			<em><strong>Pandur in WebGL</strong></em><br />
+			<em>3D Model with 8.957 faces</em><br />
+			<em>Model created by André Guedes and Nuno Guedes</em><br />
+			<em>WebGL version uses JavaScript's 3d rendering engine <a href="https://github.com/mrdoob/three.js/"><strong>Three.JS</strong></a></em>
 		</div>
 		
 		<div class="coluna_dir">
 		<a href="http://andreguedes.pt/" id="logo"><img src="andre_guedes_pt.png" /></a>
-			<strong>Versão WebGL criada por André Guedes</strong><br />
+			<strong>WebGL version created by<br /> André Guedes</strong><br />
 			<a href="http://andreguedes.pt/">http://andreguedes.pt</a>
 			
 		</div>
