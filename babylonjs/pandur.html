@@ -132,15 +132,14 @@
 
 			var pandur;
 
-			
 			var scene = new BABYLON.Scene(engine);
 			scene.clearColor = new BABYLON.Color3(1, 1, 1);
 
-			var esfera =  new BABYLON.Mesh.CreateSphere("sphere", 16, 0.1, scene);
-			var esferaMaterial = new BABYLON.StandardMaterial("vermelho", scene);
-			esferaMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0);
-			esferaMaterial.emissiveColor = new BABYLON.Color3(0, 1, 0)
-			esfera.material = esferaMaterial;
+			var sphere =  new BABYLON.MeshBuilder.CreateSphere("sphere", 16, 0.1, scene);
+			var sphereMaterial = new BABYLON.StandardMaterial("vermelho", scene);
+			sphereMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0);
+			sphereMaterial.emissiveColor = new BABYLON.Color3(0, 1, 0)
+			sphere.material = sphereMaterial;
 		
 			//Adding a light
 			//var light = new BABYLON.PointLight("Omni", new BABYLON.Vector3(20, 20, 100), scene);
@@ -156,18 +155,19 @@
 			camera.upperRadiusLimit = 15;
 			camera.attachControl(canvas, false);
 		
-			console.log("1 | pandur: " + pandur);
+			// console.log("1 | pandur: " + pandur);
+
 			// The first parameter can be used to specify which mesh to import. Here we import all meshes
 			BABYLON.SceneLoader.ImportMesh("", "scenes/", "pandur.babylon", scene, function (newMeshes) {
 				// Set the target of the camera to the first imported mesh
 				pandur = newMeshes[0];
-				console.log("2 | pandur: " + pandur);
+				// console.log("2 | pandur: " + pandur);
 				
 				shadowGenerator.getShadowMap().renderList.push(pandur);
 
 				camera.target = newMeshes[0];
 			});
-			console.log("3 | pandur: " + pandur);
+			// console.log("3 | pandur: " + pandur);
 
 			//var ground = BABYLON.Mesh.CreateGround("ground", 10.0, 10.0, 1.0, scene, false);
 			var ground = BABYLON.Mesh.CreateGround("ground", 6, 6, 2, scene);
@@ -185,7 +185,7 @@
 
 				//light.position = camera.position;
 				var posicaoTemporaria = new BABYLON.Vector3(Math.cos(alpha) * 2, 4, Math.sin(alpha) * 2);
-				esfera.position = posicaoTemporaria;
+				sphere.position = posicaoTemporaria;
 				light.position = posicaoTemporaria;
 
 				alpha += 0.01;
